@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block body %}
+
+    
+    {% if user_name %}
+    <p>Hello, <span>{{user_name}}</span><a href="/logout?org=main">Logout</a></p>
+    <ul>
+        <li><a href="{{ url_for('compare') }}">Compare</a></li>
+    </ul>
+    
+    
+    {% else %}
+    <p>Login with Salesforce</p>
+	<select id="org_one_env" name="org_one_env">
+        <option value="Production">Production</option>
+        <option value="Sandbox">Sandbox</option>
+    </select>
+    <button id="main-login">Click</button>
+    <input type="hidden" id="client-id" value="{{client_key}}" />
+    {% endif %}
+
+    
+
+{% endblock %}

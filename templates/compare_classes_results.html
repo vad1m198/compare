@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block body %}
+
+    <h2>Compare classes results</h2>
+    
+    {% for o in result %}
+        <h3>{{ o.name }}</h3>
+        <code class="result-table">{{ o.result_html|safe }}</code>
+    {% endfor %}
+    
+
+    
+
+{% endblock %}

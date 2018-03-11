@@ -1,0 +1,47 @@
+body {
+    font-family: 'Georgia', serif;
+    font-size: 16px;
+    margin: 30px;
+    padding: 0;
+}
+
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.container .left-part,
+.container .right-part {
+    flex-grow: 1;
+    text-align: center;
+}
+
+#orgOneDisplay, #orgTwoDisplay {
+    display: none;
+}
+
+#compare {
+    visibility: hidden;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.error {
+    background-color:#f26b6b;
+}
+
+del {
+    background: #ffe6e6;
+}
+
+ins {
+    background:#e6ffe6;
+}
+
+.result-table,
+.result-table table {
+    width: 100%;
+}
