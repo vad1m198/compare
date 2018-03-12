@@ -39,7 +39,7 @@ def login_required(f):
             sec_org_user_info = rest_sec_org.rest_api_get("/services/oauth2/userinfo")
             if sec_org_user_info.status_code == 403:
                 session.pop(SF_SEC_TOKEN_NAME, None)
-                session.pop(SF_SEC_TOKEN_NAME, None)
+                session.pop(SF_SEC_INSTANCE_URL_TOKEN_NAME, None)
                 return redirect(url_for('index'))
             return f(rest_main_org, main_org_user_info, rest_sec_org, sec_org_user_info, *args, **kwargs)
         else:
