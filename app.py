@@ -27,12 +27,12 @@ SF_SEC_INSTANCE_URL_TOKEN_NAME = 'salesforce_sec_instance_url'
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if SF_DEF_TOKEN_NAME in session and SF_DEF_INSTANCE_URL_TOKEN_NAME in session:
+        if SF_DEF_TOKEN_NAME in session and SF_DEF_INSTANCE_URL_TOKEN_NAME in session and SF_SEC_TOKEN_NAME in session and SF_SEC_INSTANCE_URL_TOKEN_NAME in session:
             return f(*args, **kwargs)    
         else:
             return redirect(url_for('index'))
     return decorated_function
-
+"""
 def secondary_login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -43,18 +43,25 @@ def secondary_login_required(f):
         else:
             return redirect(url_for('index'))
     return decorated_function
-
+"""
 
 
 @app.route('/')
 def index():
+    main_org_user_info = None
+    sec_org_user_info = None
     if SF_DEF_TOKEN_NAME in session and SF_DEF_INSTANCE_URL_TOKEN_NAME in session:
-        rest = RESTApi(session[SF_DEF_TOKEN_NAME],session[SF_DEF_INSTANCE_URL_TOKEN_NAME], API_VERSION)
-        user_info = rest.rest_api_get("/services/oauth2/userinfo")
-        return render_template('index.html', user_name = user_info.json()['name'])
-    else:
-        return render_template('index.html',client_key=CONSUMER_KEY)
-
+        rest_main_org = RESTApi(session[SF_DEF_TOKEN_NAME],session[SF_DEF_INSTANCE_URL_TOKEN_NAME], API_VERSION)
+        main_org_user_info = rest_main_org.rest_api_get("/services/oauth2/userinfo")
+    
+    if SF_SEC_TOKEN_NAME in session and SF_SEC_INSTANCE_URL_TOKEN_NAME in session:
+        rest_sec_org = RESTApi(session[SF_SEC_TOKEN_NAME],session[SF_SEC_INSTANCE_URL_TOKEN_NAME], API_VERSION)
+        sec_org_user_info = rest_sec_org.rest_api_get("/services/oauth2/userinfo")
+    
+    return render_template('index.html', main_org_user_name = None if main_org_user_info is None else main_org_user_info.json().get('name'),
+                    sec_org_user_name = None if sec_org_user_info is None else sec_org_user_info.json().get('name'),
+                    client_key=CONSUMER_KEY)
+        
 @app.route('/logout')
 def logout():
     if request.args.get('org') == 'main':
@@ -64,7 +71,7 @@ def logout():
     else:
         session.pop(SF_SEC_TOKEN_NAME, None)
         session.pop(SF_SEC_INSTANCE_URL_TOKEN_NAME, None)
-        return redirect(url_for('compare'))
+        return redirect(url_for('index'))
 
 @app.route('/auth/authorized')
 def authorized():
@@ -76,8 +83,9 @@ def authorized():
             'client_secret': CONSUMER_SECRET
         }
 
-    d = json.loads(base64.b64decode(request.args.get('state')))    
-    if d['type'].lower() == 'sandbox':
+    d = json.loads(base64.b64decode(request.args.get('state')))
+
+    if d.get('type').lower() == 'sandbox':
         auth_site = 'https://test.salesforce.com'
     else:
         auth_site = 'https://login.salesforce.com'
@@ -104,10 +112,10 @@ def authorized():
     else:
         session[SF_SEC_TOKEN_NAME] = response.json()['access_token']
         session[SF_SEC_INSTANCE_URL_TOKEN_NAME] = response.json()['instance_url']
-        return redirect(url_for('compare'))
+        return redirect(url_for('index'))
 
     
-
+"""
 @app.route('/u')
 @login_required
 def user_info():
@@ -127,23 +135,23 @@ def compare():
         return render_template('compare.html', user_name = user_info.json()['name'])
     else:
         return render_template('compare.html',client_key=CONSUMER_KEY)
-
+"""
 @app.route('/compare/classes',methods=['GET'])
-@secondary_login_required
+@login_required
 def compare_classes():
     rest = RESTApi(session[SF_DEF_TOKEN_NAME],session[SF_DEF_INSTANCE_URL_TOKEN_NAME], API_VERSION)
     user_info = rest.rest_api_get("/services/oauth2/userinfo")
     query_url = user_info.json()['urls']['tooling_rest'] +\
         'query/?q=' +\
-        quote('SELECT Id,Name,ManageableState from ApexClass WHERE ManageableState=\'unmanaged\' ORDER BY NAME ASC') 
+        quote('SELECT Id,Name,ManageableState from ApexClass WHERE ManageableState=\'unmanaged\' ORDER BY NAME ASC LIMIT 1000') 
     resp = rest.rest_api_get(query_url)
-    #return jsonify(resp.json())
     if resp.status_code == 200:
         return render_template('compare_classes.html', options=resp.json()['records'])
     else:
         return jsonify(resp.json())
 
 @app.route("/compare/classes", methods=['POST'])
+@login_required
 def compare_classes_post():
     names =request.form.getlist('classes')
     return redirect(url_for("compare_classes_results", class_names=','.join(names)))
@@ -196,11 +204,12 @@ def compare_classes_results():
         if resp_two.status_code != 200:
             return jsonify(resp_two.json())
 
+"""
 @app.route('/compare/aura')
 @secondary_login_required
 def compare_aura():
     return render_template('compare.html',client_key=CONSUMER_KEY)
-
+"""
 	
 if __name__ == "__main__":
 	app.run()

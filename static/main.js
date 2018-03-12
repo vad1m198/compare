@@ -22,8 +22,9 @@ $(document).ready(function () {
 	})
 
 	$('#secondary-login').click(function() {
+		
 		var oauthUrl = "https://login.salesforce.com"
-		if ( $('#org_env').val() == 'Sandbox' ) {			
+		if ( $('#org_two_env').val() == 'Sandbox' ) {			
 			var oauthUrl = "https://test.salesforce.com"
 		}
 		var clientid = $("#client-id").val()
@@ -31,15 +32,13 @@ $(document).ready(function () {
 		var callBackUrl = baseHostUrl + "/auth/authorized";
 		var state = {
 			org: 'secondary',
-			type: $('#org_env').val()
-		}
-		console.log('state >>>>>>>>>>>> ');
-		console.log(state);
+			type: $('#org_two_env').val()
+		}		
 		oauthUrl += "/services/oauth2/authorize?" +
 			"response_type=code&client_id=" + clientid +
 			"&prompt=login" +
 			"&redirect_uri=" + callBackUrl + "&state=" + btoa(JSON.stringify(state));
-
+		
 		window.location =  oauthUrl;
 
 	})

@@ -13,24 +13,7 @@ body {
 
 .container .left-part,
 .container .right-part {
-    flex-grow: 1;
-    text-align: center;
-}
-
-#orgOneDisplay, #orgTwoDisplay {
-    display: none;
-}
-
-#compare {
-    visibility: hidden;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-}
-
-
-.error {
-    background-color:#f26b6b;
+    flex-grow: 1;    
 }
 
 del {
@@ -44,4 +27,20 @@ ins {
 .result-table,
 .result-table table {
     width: 100%;
+}
+
+#orgOneLogin .slds-form-element.cm-select,
+#orgTwoLogin .slds-form-element.cm-select {
+    width: 10rem;
+}
+
+#orgOneLogin .cm-controls,
+#orgTwoLogin .cm-controls {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.cm-label ,#compare {
+    text-align: center;
 }
