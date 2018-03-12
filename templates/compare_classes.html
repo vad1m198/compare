@@ -1,16 +1,16 @@
 {% extends "layout.html" %}
 {% block body %}
 <div class="slds-m-around_x-large">
+    <nav class="slds-m-bottom_medium" role="navigation" aria-label="Breadcrumbs">
+        <ol class="slds-breadcrumb slds-list_horizontal slds-wrap">
+            <li class="slds-breadcrumb__item slds-text-title_caps"><a href="{{ url_for('index') }}">Home</a></li>                
+        </ol>
+    </nav>
     <div class="slds-text-heading_medium">Compare classes</div>
     <form action="{{ url_for('compare_classes') }}" method="post">
         <fieldset class="slds-form-element">
             <legend class="slds-form-element__legend slds-form-element__label">Select classes to compare</legend>
             {% for o in options %}
-                <!--<div>
-                    <input type="checkbox" id="{{ o.Id }}"  name="classes" value="{{ o.Name }}" />
-                    <label for="{{ o.Id }}">{{ o.Name }}</label>
-                </div>-->
-
                 <div class="slds-form-element">
                     <div class="slds-form-element__control">
                         <span class="slds-checkbox">
@@ -23,8 +23,7 @@
                     </div>
                 </div>
                 
-            {% endfor %}
-            <!--<input type="checkbox" name="all-classes" value="Compare all classes" />Compare all classes<br />-->
+            {% endfor %}            
         </fieldset>
 
         <button class="slds-button slds-button_brand" type="submit">Submit</button>    

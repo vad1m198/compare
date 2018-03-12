@@ -185,6 +185,74 @@ def compare_classes_results(rest_main_org, main_org_user_info, rest_sec_org, sec
         if resp_two.status_code != 200:
             return jsonify(resp_two.json())
 
+@app.route("/compare/aura", methods=['GET'])
+@login_required
+def compare_aura(rest_main_org, main_org_user_info, rest_sec_org, sec_org_user_info):
+    query_url = main_org_user_info.json()['urls']['tooling_rest'] +\
+        'query/?q=' +\
+         quote('SELECT Id,ApiVersion,Description,DeveloperName,Language'\
+            ',MasterLabel,ManageableState from AuraDefinitionBundle WHERE  ManageableState=\'unmanaged\' ORDER BY DeveloperName ASC LIMIT 1000')
+    resp = rest_main_org.rest_api_get(query_url)
+    if resp.status_code == 200:
+        return render_template('compare_aura.html', options=resp.json()['records'])
+    else:
+        return jsonify(resp.json())
+
+@app.route("/compare/aura", methods=['POST'])
+@login_required
+def compare_aura_post(rest_main_org, main_org_user_info, rest_sec_org, sec_org_user_info):    
+    names = request.form.getlist('components')
+    return redirect(url_for("compare_aura_results", component_names=','.join(names)))
+
+@app.route("/compare/aura_result", methods=['GET'])
+@login_required
+def compare_aura_results(rest_main_org, main_org_user_info, rest_sec_org, sec_org_user_info):
+    component_names_param = request.args['component_names']
+    component_names = "'"+"','".join(component_names_param.split(","))+"'"
+    
+    query_url_one = main_org_user_info.json()['urls']['tooling_rest'] +\
+        'query/?q=' +\
+            quote('SELECT AuraDefinitionBundle.DeveloperName,AuraDefinitionBundleId,DefType'\
+            ',ManageableState,Source from AuraDefinition WHERE AuraDefinitionBundle.DeveloperName IN (' + component_names + ')'\
+            ' AND ManageableState=\'unmanaged\' AND DefType NOT IN (\'DOCUMENTATION\',\'SVG\') '\
+            ' ORDER BY AuraDefinitionBundle.DeveloperName ASC')
+    resp_one = rest_main_org.rest_api_get(query_url_one)
+
+    query_url_two = sec_org_user_info.json()['urls']['tooling_rest'] +\
+        'query/?q=' +\
+        quote('SELECT AuraDefinitionBundle.DeveloperName,AuraDefinitionBundleId,DefType'\
+            ',ManageableState,Source from AuraDefinition WHERE AuraDefinitionBundle.DeveloperName IN (' + component_names + ')'\
+            ' AND ManageableState=\'unmanaged\' AND DefType NOT IN (\'DOCUMENTATION\',\'SVG\') '\
+            ' ORDER BY AuraDefinitionBundle.DeveloperName ASC')
+    resp_two = rest_sec_org.rest_api_get(query_url_two)
+    
+    if resp_one.status_code == 200 and resp_two.status_code == 200:
+        resp_one_map = dict((r['AuraDefinitionBundle']['DeveloperName'] + r['DefType'],r['Source']) for r in resp_one.json().get('records'))
+        resp_two_map = dict((r['AuraDefinitionBundle']['DeveloperName'] + r['DefType'],r['Source']) for r in resp_two.json().get('records'))
+        dmp = dmp_module.diff_match_patch()
+        result = []
+        for key, value in resp_one_map.items():
+            body_one = value
+            body_two = resp_two_map[key] if  key in resp_two_map else ""
+            diff = dmp.diff_main(body_one, body_two)
+            diff_present = bool(0)
+            for op, length in diff:
+                if op != 0: 
+                    diff_present = bool(1)
+                    break
+
+            if diff_present:
+                result_html = d2h(diff)
+            else:
+                result_html = '<table class="no-diff"><tr>No differences</tr></table>'
+            result.append({'name':key, 'result_html' : result_html})
+        return render_template('compare_aura_results.html', result=result)  
+    else:
+        if resp_one.status_code != 200:
+            return jsonify(resp_one.json())
+        if resp_two.status_code != 200:
+            return jsonify(resp_two.json())
+
 
 	
 if __name__ == "__main__":
