@@ -28,23 +28,23 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if SF_DEF_TOKEN_NAME in session and SF_DEF_INSTANCE_URL_TOKEN_NAME in session and SF_SEC_TOKEN_NAME in session and SF_SEC_INSTANCE_URL_TOKEN_NAME in session:
-            return f(*args, **kwargs)    
-        else:
-            return redirect(url_for('index'))
-    return decorated_function
-"""
-def secondary_login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if SF_SEC_TOKEN_NAME in session and SF_SEC_INSTANCE_URL_TOKEN_NAME in session and SF_DEF_TOKEN_NAME in session and SF_DEF_INSTANCE_URL_TOKEN_NAME in session:
-            return f(*args, **kwargs)    
-        elif SF_DEF_TOKEN_NAME in session and SF_DEF_INSTANCE_URL_TOKEN_NAME in session:
-            return redirect(url_for('compare'))
-        else:
-            return redirect(url_for('index'))
-    return decorated_function
-"""
+            rest_main_org = RESTApi(session[SF_DEF_TOKEN_NAME],session[SF_DEF_INSTANCE_URL_TOKEN_NAME], API_VERSION)
+            main_org_user_info = rest_main_org.rest_api_get("/services/oauth2/userinfo")
+            if main_org_user_info.status_code == 403:
+                session.pop(SF_DEF_TOKEN_NAME, None)
+                session.pop(SF_DEF_INSTANCE_URL_TOKEN_NAME, None)
+                return redirect(url_for('index'))
 
+            rest_sec_org = RESTApi(session[SF_SEC_TOKEN_NAME],session[SF_SEC_INSTANCE_URL_TOKEN_NAME], API_VERSION)
+            sec_org_user_info = rest_sec_org.rest_api_get("/services/oauth2/userinfo")
+            if sec_org_user_info.status_code == 403:
+                session.pop(SF_SEC_TOKEN_NAME, None)
+                session.pop(SF_SEC_TOKEN_NAME, None)
+                return redirect(url_for('index'))
+            return f(rest_main_org, main_org_user_info, rest_sec_org, sec_org_user_info, *args, **kwargs)
+        else:
+            return redirect(url_for('index'))
+    return decorated_function
 
 @app.route('/')
 def index():
@@ -52,12 +52,22 @@ def index():
     sec_org_user_info = None
     if SF_DEF_TOKEN_NAME in session and SF_DEF_INSTANCE_URL_TOKEN_NAME in session:
         rest_main_org = RESTApi(session[SF_DEF_TOKEN_NAME],session[SF_DEF_INSTANCE_URL_TOKEN_NAME], API_VERSION)
-        main_org_user_info = rest_main_org.rest_api_get("/services/oauth2/userinfo")
-    
+        main_org_user_info = rest_main_org.rest_api_get("/services/oauth2/userinfo")        
+        if main_org_user_info.status_code == 403:
+            session.pop(SF_DEF_TOKEN_NAME, None)
+            return redirect(url_for('index'))
+        elif main_org_user_info.status_code != 200:
+            return jsonify(main_org_user_info.json())
+
     if SF_SEC_TOKEN_NAME in session and SF_SEC_INSTANCE_URL_TOKEN_NAME in session:
         rest_sec_org = RESTApi(session[SF_SEC_TOKEN_NAME],session[SF_SEC_INSTANCE_URL_TOKEN_NAME], API_VERSION)
-        sec_org_user_info = rest_sec_org.rest_api_get("/services/oauth2/userinfo")
-    
+        sec_org_user_info = rest_sec_org.rest_api_get("/services/oauth2/userinfo")        
+        if sec_org_user_info.status_code == 403:
+            session.pop(SF_SEC_TOKEN_NAME, None)
+            return redirect(url_for('index'))
+        elif sec_org_user_info.status_code != 200:
+            return jsonify(sec_org_user_info.json())
+        
     return render_template('index.html', main_org_user_name = None if main_org_user_info is None else main_org_user_info.json().get('name'),
                     sec_org_user_name = None if sec_org_user_info is None else sec_org_user_info.json().get('name'),
                     client_key=CONSUMER_KEY)
@@ -106,45 +116,21 @@ def authorized():
         )
 
     if d['org'] == 'main':
-        session[SF_DEF_TOKEN_NAME] = response.json()['access_token']
-        session[SF_DEF_INSTANCE_URL_TOKEN_NAME] = response.json()['instance_url']
+        session[SF_DEF_TOKEN_NAME] = response.json().get('access_token')
+        session[SF_DEF_INSTANCE_URL_TOKEN_NAME] = response.json().get('instance_url')
         return redirect(url_for('index'))
     else:
-        session[SF_SEC_TOKEN_NAME] = response.json()['access_token']
-        session[SF_SEC_INSTANCE_URL_TOKEN_NAME] = response.json()['instance_url']
+        session[SF_SEC_TOKEN_NAME] = response.json().get('access_token')
+        session[SF_SEC_INSTANCE_URL_TOKEN_NAME] = response.json().get('instance_url')
         return redirect(url_for('index'))
 
-    
-"""
-@app.route('/u')
-@login_required
-def user_info():
-    if request.args.get('org') == 'main':
-        rest = RESTApi(session[SF_DEF_TOKEN_NAME],session[SF_DEF_INSTANCE_URL_TOKEN_NAME], API_VERSION)
-    else:
-        rest = RESTApi(session[SF_SEC_TOKEN_NAME],session[SF_SEC_INSTANCE_URL_TOKEN_NAME], API_VERSION)    
-    user_info = rest.rest_api_get("/services/oauth2/userinfo")
-    return jsonify(user_info.json())
-
-@app.route('/compare')
-@login_required
-def compare():
-    if SF_SEC_TOKEN_NAME in session and SF_SEC_INSTANCE_URL_TOKEN_NAME in session:
-        rest = RESTApi(session[SF_SEC_TOKEN_NAME],session[SF_SEC_INSTANCE_URL_TOKEN_NAME], API_VERSION)
-        user_info = rest.rest_api_get("/services/oauth2/userinfo")
-        return render_template('compare.html', user_name = user_info.json()['name'])
-    else:
-        return render_template('compare.html',client_key=CONSUMER_KEY)
-"""
 @app.route('/compare/classes',methods=['GET'])
 @login_required
-def compare_classes():
-    rest = RESTApi(session[SF_DEF_TOKEN_NAME],session[SF_DEF_INSTANCE_URL_TOKEN_NAME], API_VERSION)
-    user_info = rest.rest_api_get("/services/oauth2/userinfo")
-    query_url = user_info.json()['urls']['tooling_rest'] +\
+def compare_classes(rest_main_org, main_org_user_info, rest_sec_org, sec_org_user_info):    
+    query_url = main_org_user_info.json()['urls']['tooling_rest'] +\
         'query/?q=' +\
         quote('SELECT Id,Name,ManageableState from ApexClass WHERE ManageableState=\'unmanaged\' ORDER BY NAME ASC LIMIT 1000') 
-    resp = rest.rest_api_get(query_url)
+    resp = rest_main_org.rest_api_get(query_url)
     if resp.status_code == 200:
         return render_template('compare_classes.html', options=resp.json()['records'])
     else:
@@ -152,34 +138,29 @@ def compare_classes():
 
 @app.route("/compare/classes", methods=['POST'])
 @login_required
-def compare_classes_post():
+def compare_classes_post(rest_main_org, main_org_user_info, rest_sec_org, sec_org_user_info):
     names =request.form.getlist('classes')
     return redirect(url_for("compare_classes_results", class_names=','.join(names)))
 
 @app.route("/compare/classes_result", methods=['GET'])
 @login_required
-def compare_classes_results():
+def compare_classes_results(rest_main_org, main_org_user_info, rest_sec_org, sec_org_user_info):
     class_names_param = request.args['class_names']
     class_names = "'"+"','".join(class_names_param.split(","))+"'"
     
-    rest_one = RESTApi(session[SF_DEF_TOKEN_NAME],session[SF_DEF_INSTANCE_URL_TOKEN_NAME], API_VERSION)
-    user_info_one = rest_one.rest_api_get("/services/oauth2/userinfo")
-    rest_two = RESTApi(session[SF_SEC_TOKEN_NAME],session[SF_SEC_INSTANCE_URL_TOKEN_NAME], API_VERSION)
-    user_info_two = rest_two.rest_api_get("/services/oauth2/userinfo")
-
-    query_url_one = user_info_one.json()['urls']['tooling_rest'] +\
+    query_url_one = main_org_user_info.json()['urls']['tooling_rest'] +\
         'query/?q=' +\
         quote('SELECT Name,Body,ManageableState from ApexClass WHERE Name IN (' + class_names + ') AND ManageableState=\'unmanaged\' ORDER BY NAME ASC')
-    resp_one = rest_one.rest_api_get(query_url_one)
+    resp_one = rest_main_org.rest_api_get(query_url_one)
 
-    query_url_two = user_info_two.json()['urls']['tooling_rest'] +\
+    query_url_two = sec_org_user_info.json()['urls']['tooling_rest'] +\
         'query/?q=' +\
         quote('SELECT Name,Body,ManageableState from ApexClass WHERE Name IN (' + class_names + ') AND ManageableState=\'unmanaged\' ORDER BY NAME ASC')
-    resp_two = rest_two.rest_api_get(query_url_two)
+    resp_two = rest_sec_org.rest_api_get(query_url_two)
     
     if resp_one.status_code == 200 and resp_two.status_code == 200:
-        resp_one_map = dict((r['Name'],r['Body']) for r in resp_one.json()['records'])
-        resp_two_map = dict((r['Name'],r['Body']) for r in resp_two.json()['records'])        
+        resp_one_map = dict((r['Name'],r['Body']) for r in resp_one.json().get('records'))
+        resp_two_map = dict((r['Name'],r['Body']) for r in resp_two.json().get('records'))
         dmp = dmp_module.diff_match_patch()
         result = []
         for key, value in resp_one_map.items():
@@ -204,12 +185,7 @@ def compare_classes_results():
         if resp_two.status_code != 200:
             return jsonify(resp_two.json())
 
-"""
-@app.route('/compare/aura')
-@secondary_login_required
-def compare_aura():
-    return render_template('compare.html',client_key=CONSUMER_KEY)
-"""
+
 	
 if __name__ == "__main__":
 	app.run()
