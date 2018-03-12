@@ -76,9 +76,8 @@ def authorized():
             'client_secret': CONSUMER_SECRET
         }
 
-    d = json.loads(base64.b64decode(request.args.get('state')))
-
-    if d['type'] == 'sandbox':
+    d = json.loads(base64.b64decode(request.args.get('state')))    
+    if d['type'].lower() == 'sandbox':
         auth_site = 'https://test.salesforce.com'
     else:
         auth_site = 'https://login.salesforce.com'

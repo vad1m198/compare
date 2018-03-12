@@ -1,3 +1,4 @@
 Flask
 diff_match_patch
 gunicorn
+requests
