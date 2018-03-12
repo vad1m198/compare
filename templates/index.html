@@ -1,24 +1,64 @@
 {% extends "layout.html" %}
 {% block body %}
-
     
-    {% if user_name %}
-    <p>Hello, <span>{{user_name}}</span><a href="/logout?org=main">Logout</a></p>
-    <ul>
-        <li><a href="{{ url_for('compare') }}">Compare</a></li>
-    </ul>
-    
-    
-    {% else %}
-    <p>Login with Salesforce</p>
-	<select id="org_one_env" name="org_one_env">
-        <option value="Production">Production</option>
-        <option value="Sandbox">Sandbox</option>
-    </select>
-    <button id="main-login">Click</button>
-    <input type="hidden" id="client-id" value="{{client_key}}" />
+    <div class="container slds-m-top_x-large">
+        <div class="left-part org1">            
+                <div id="orgOneLogin">
+                    <div class="slds-text-heading_medium cm-label">Main org</div>
+                    {% if main_org_user_name %}
+                        <p class="slds-m-top_medium cm-label">Logged in as <span>{{main_org_user_name}}</span><a class="slds-m-left_x-small" href="/logout?org=main">Logout</a></p>
+                    {% else %}
+                    
+                    
+                    <div class="cm-controls">
+                        <div class="slds-form-element cm-select">
+                            <label class="slds-form-element__label" for="org_one_env">Org Type</label>
+                            <div class="slds-form-element__control">
+                                <div class="slds-select_container">
+                                <select class="slds-select" id="org_one_env" name="org_one_env">
+                                    <option value="Production">Production</option>
+                                    <option value="Sandbox">Sandbox</option>
+                                </select>
+                                </div>
+                            </div>
+                        </div>                    
+                        <button class="slds-button slds-button_neutral slds-m-left_x-small" type="button" id="main-login">Login</button>
+                    </div>
+                    {% endif %}    
+                </div>
+                    
+        </div>
+        <div class="right-part org2">
+                <div id="orgTwoLogin">
+                    <div class="slds-text-heading_medium cm-label">Secondary org</div>
+                    {% if sec_org_user_name %}
+                        <p class="slds-m-top_medium cm-label">Logged in as <span>{{sec_org_user_name}}</span><a class="slds-m-left_x-small" href="/logout?org=secondary">Logout</a></p>
+                    {% else %}
+                    <div class="cm-controls">
+                        <div class="slds-form-element cm-select">
+                            <label class="slds-form-element__label" for="org_two_env">Org Type</label>
+                            <div class="slds-form-element__control">
+                                <div class="slds-select_container">
+                                <select class="slds-select" id="org_two_env" name="org_two_env">
+                                    <option value="Production">Production</option>
+                                    <option value="Sandbox">Sandbox</option>
+                                </select>
+                                </div>
+                            </div>
+                        </div>                    
+                        <button class="slds-button slds-button_neutral slds-m-left_x-small" type="button" id="secondary-login">Login</button>
+                    </div>
+                    {% endif %} 
+                </div>
+        </div>
+    </div>
+    {% if main_org_user_name and sec_org_user_name %}
+    <div id="compare">
+        <a id="compare-class" href="{{ url_for('compare_classes') }}">Compare classes</a>
+        <!--<a id="compare-aura" href="/compare/aura">Compare aura</a>-->
+    </div>
     {% endif %}
-
-    
-
+    <input type="hidden" id="client-id" value="{{client_key}}" />
+    <!--<iframe src="https://login.salesforce.com/secur/logout.jsp" width="0" height="0" style="display:none;"></iframe>
+    <iframe src="https://test.salesforce.com/secur/logout.jsp" width="0" height="0" style="display:none;"></iframe>-->
 {% endblock %}

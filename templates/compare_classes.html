@@ -1,19 +1,33 @@
 {% extends "layout.html" %}
 {% block body %}
-<h2>Compare classes</h2>
-<form action="{{ url_for('compare_classes') }}" method="post">
-    <fieldset>
-        <legend>Select classes to compare</legend>
-        {% for o in options %}
-            <div>
-                <input type="checkbox" id="{{ o.Id }}"  name="classes" value="{{ o.Name }}" />
-                <label for="{{ o.Id }}">{{ o.Name }}</label>
-            </div>
-            
-        {% endfor %}
-        <!--<input type="checkbox" name="all-classes" value="Compare all classes" />Compare all classes<br />-->
-    </fieldset>
+<div class="slds-m-around_x-large">
+    <div class="slds-text-heading_medium">Compare classes</div>
+    <form action="{{ url_for('compare_classes') }}" method="post">
+        <fieldset class="slds-form-element">
+            <legend class="slds-form-element__legend slds-form-element__label">Select classes to compare</legend>
+            {% for o in options %}
+                <!--<div>
+                    <input type="checkbox" id="{{ o.Id }}"  name="classes" value="{{ o.Name }}" />
+                    <label for="{{ o.Id }}">{{ o.Name }}</label>
+                </div>-->
 
-    <button type="submit">Submit</button>    
-</form>
+                <div class="slds-form-element">
+                    <div class="slds-form-element__control">
+                        <span class="slds-checkbox">
+                        <input  type="checkbox" id="{{ o.Id }}"  name="classes" value="{{ o.Name }}" />
+                        <label class="slds-checkbox__label" for="{{ o.Id }}">
+                            <span class="slds-checkbox_faux"></span>
+                            <span class="slds-form-element__label">{{ o.Name }}</span>
+                        </label>
+                        </span>
+                    </div>
+                </div>
+                
+            {% endfor %}
+            <!--<input type="checkbox" name="all-classes" value="Compare all classes" />Compare all classes<br />-->
+        </fieldset>
+
+        <button class="slds-button slds-button_brand" type="submit">Submit</button>    
+    </form>
+</div>
 {% endblock %}
