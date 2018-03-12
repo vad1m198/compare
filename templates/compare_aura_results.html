@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="slds-m-around_x-large">
+        
+    <nav class="slds-m-bottom_medium" role="navigation" aria-label="Breadcrumbs">
+        <ol class="slds-breadcrumb slds-list_horizontal slds-wrap">
+            <li class="slds-breadcrumb__item slds-text-title_caps"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="slds-breadcrumb__item slds-text-title_caps"><a href="{{ url_for('compare_aura') }}">select components</a></li>
+        </ol>
+    </nav>        
+    <div class="slds-text-heading_medium">Compare aura components results</div>
+    
+    {% for o in result %}
+        <div class="slds-text-heading_small slds-m-top_small">{{ o.name }}</div>
+        <code class="result-table">{{ o.result_html|safe }}</code>
+    {% endfor %}    
+</div>
+    
+
+{% endblock %}

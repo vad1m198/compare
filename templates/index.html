@@ -53,12 +53,10 @@
         </div>
     </div>
     {% if main_org_user_name and sec_org_user_name %}
-    <div id="compare">
-        <a id="compare-class" href="{{ url_for('compare_classes') }}">Compare classes</a>
-        <!--<a id="compare-aura" href="/compare/aura">Compare aura</a>-->
-    </div>
+    <ul id="compare">
+        <li><a id="compare-class" href="{{ url_for('compare_classes') }}">Compare classes</a></li>
+        <li><a id="compare-class" href="{{ url_for('compare_aura') }}">Compare aura</a></li>
+    </ul>
     {% endif %}
     <input type="hidden" id="client-id" value="{{client_key}}" />
-    <!--<iframe src="https://login.salesforce.com/secur/logout.jsp" width="0" height="0" style="display:none;"></iframe>
-    <iframe src="https://test.salesforce.com/secur/logout.jsp" width="0" height="0" style="display:none;"></iframe>-->
 {% endblock %}
