@@ -43,12 +43,58 @@ class RESTApi(object):
         if rest_url.startswith('http:') or rest_url.startswith('https:'):
             response = requests.get(
                 "{rest_url}".format(
-                    org_instance=self.instance, rest_url=rest_url
+                    rest_url=rest_url
                 ).replace("{version}", self.api_version),
                 headers=self.sf_headers
             )
         else:    
             response = requests.get(
+                "{org_instance}/{rest_url}".format(
+                    org_instance=self.instance, rest_url=rest_url
+                ).replace("{version}", self.api_version),
+                headers=self.sf_headers
+            )
+
+        return response
+
+    def rest_api_post(self, rest_url, body):
+        """
+        POST request to the REST API
+        :return: JSON string of the POST response
+        """
+
+        if rest_url.startswith('http:') or rest_url.startswith('https:'):
+            response = requests.post(
+                "{rest_url}".format(
+                    rest_url=rest_url
+                ).replace("{version}", self.api_version),
+                data=body,
+                headers=self.sf_headers
+            )
+        else:    
+            response = requests.post(
+                "{org_instance}/{rest_url}".format(
+                    org_instance=self.instance, rest_url=rest_url
+                ).replace("{version}", self.api_version),
+                data=body,
+                headers=self.sf_headers
+            )
+
+        return response
+
+    def rest_api_delete(self, rest_url):
+        """
+        DELETE request to the REST API - Not tested
+        :return: JSON string of the DELETE response
+        """
+        if rest_url.startswith('http:') or rest_url.startswith('https:'):
+            response = requests.delete(
+                "{rest_url}".format(rest_url=rest_url
+                ).replace("{version}", self.api_version),
+                headers=self.sf_headers
+            )
+        else:    
+            response = requests.delete(
                 "{org_instance}/{rest_url}".format(
                     org_instance=self.instance, rest_url=rest_url
                 ).replace("{version}", self.api_version),

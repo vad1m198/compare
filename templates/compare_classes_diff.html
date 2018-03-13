@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="slds-m-around_x-large">
+        
+    <nav class="slds-m-bottom_medium" role="navigation" aria-label="Breadcrumbs">
+        <ol class="slds-breadcrumb slds-list_horizontal slds-wrap">
+            <li class="slds-breadcrumb__item slds-text-title_caps"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="slds-breadcrumb__item slds-text-title_caps"><a href="{{ url_for('compare_classes') }}">Select Classes</a></li>
+        </ol>
+    </nav>
+    <div class="slds-text-heading_small slds-m-top_small">{{ class_name }}</div>
+    <code class="result-table">{{ result_html|safe }}</code>
+    <a class="slds-button slds-button_brand" href="{{ url_for('compare_classes_deploy',class_name=class_name,source='main') }}">Deploy Main to Secondary</a>
+    <a class="slds-button slds-button_brand" href="{{ url_for('compare_classes_deploy',class_name=class_name,source='secondary') }}">Deploy Secondary to Main</a>        
+</div>
+    
+
+{% endblock %}
