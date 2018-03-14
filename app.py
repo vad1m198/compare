@@ -14,10 +14,10 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.debug = True
 
-API_VERSION = "40.0"#os.environ['SALESFORCE_API_VERSION']
-CONSUMER_KEY = "3MVG9TSaZ8P6zP1p0Z3sU2Tq80JOR_RYo7YkBwTU5k3t86BvLfTQZRVKbeTjN5TiPCJ2XErp.q2O9vu_d27hf"#os.environ['SALESFORCE_CONSUMER_KEY']
-CONSUMER_SECRET = "237642056198589716"#os.environ['SALESFORCE_CONSUMER_SECRET']
-REDIRECT_URI = "http://localhost:5000/auth/authorized"#os.environ['SALESFORCE_REDIRECT_URI']
+API_VERSION = os.environ['SALESFORCE_API_VERSION']
+CONSUMER_KEY = os.environ['SALESFORCE_CONSUMER_KEY']
+CONSUMER_SECRET = os.environ['SALESFORCE_CONSUMER_SECRET']
+REDIRECT_URI = os.environ['SALESFORCE_REDIRECT_URI']
 SF_DEF_TOKEN_NAME = 'salesforce_def_token'
 SF_DEF_INSTANCE_URL_TOKEN_NAME = 'salesforce_def_instance_url'
 SF_SEC_TOKEN_NAME = 'salesforce_sec_token'
