@@ -29,7 +29,7 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if SF_DEF_TOKEN_NAME in session and SF_DEF_INSTANCE_URL_TOKEN_NAME in session and SF_SEC_TOKEN_NAME in session and SF_SEC_INSTANCE_URL_TOKEN_NAME in session:
             rest_main_org = RESTApi(session[SF_DEF_TOKEN_NAME],session[SF_DEF_INSTANCE_URL_TOKEN_NAME], API_VERSION)
-            main_org_user_info = rest_main_org.rest_api_get("/services/oauth2/userinfo")
+            main_org_user_info = rest_main_org.rest_api_get("/services/oauth2/userinfo")            
             if main_org_user_info.status_code == 403:
                 session.pop(SF_DEF_TOKEN_NAME, None)
                 session.pop(SF_DEF_INSTANCE_URL_TOKEN_NAME, None)
@@ -37,6 +37,7 @@ def login_required(f):
 
             rest_sec_org = RESTApi(session[SF_SEC_TOKEN_NAME],session[SF_SEC_INSTANCE_URL_TOKEN_NAME], API_VERSION)
             sec_org_user_info = rest_sec_org.rest_api_get("/services/oauth2/userinfo")
+            
             if sec_org_user_info.status_code == 403:
                 session.pop(SF_SEC_TOKEN_NAME, None)
                 session.pop(SF_SEC_INSTANCE_URL_TOKEN_NAME, None)
@@ -52,7 +53,8 @@ def index():
     sec_org_user_info = None
     if SF_DEF_TOKEN_NAME in session and SF_DEF_INSTANCE_URL_TOKEN_NAME in session:
         rest_main_org = RESTApi(session[SF_DEF_TOKEN_NAME],session[SF_DEF_INSTANCE_URL_TOKEN_NAME], API_VERSION)
-        main_org_user_info = rest_main_org.rest_api_get("/services/oauth2/userinfo")        
+        main_org_user_info = rest_main_org.rest_api_get("/services/oauth2/userinfo")
+       
         if main_org_user_info.status_code == 403:
             session.pop(SF_DEF_TOKEN_NAME, None)
             return redirect(url_for('index'))
@@ -61,7 +63,8 @@ def index():
 
     if SF_SEC_TOKEN_NAME in session and SF_SEC_INSTANCE_URL_TOKEN_NAME in session:
         rest_sec_org = RESTApi(session[SF_SEC_TOKEN_NAME],session[SF_SEC_INSTANCE_URL_TOKEN_NAME], API_VERSION)
-        sec_org_user_info = rest_sec_org.rest_api_get("/services/oauth2/userinfo")        
+        sec_org_user_info = rest_sec_org.rest_api_get("/services/oauth2/userinfo")
+        
         if sec_org_user_info.status_code == 403:
             session.pop(SF_SEC_TOKEN_NAME, None)
             return redirect(url_for('index'))
@@ -82,6 +85,80 @@ def logout():
         session.pop(SF_SEC_TOKEN_NAME, None)
         session.pop(SF_SEC_INSTANCE_URL_TOKEN_NAME, None)
         return redirect(url_for('index'))
+
+@app.route('/u')
+@login_required
+def user_info(rest_main_org, main_org_user_info, rest_sec_org, sec_org_user_info):
+    """
+    query_url_one = main_org_user_info.json()['urls']['tooling_rest'] +\
+        'query/?q=' +\
+        quote('SELECT Id,Name,Body,ManageableState from ApexClass WHERE Name = \'TestClass\' AND ManageableState=\'unmanaged\' LIMIT 1')
+    resp_one = rest_main_org.rest_api_get(query_url_one)
+    body_source = resp_one.json().get('records')[0].get('Body')
+    name_source = resp_one.json().get('records')[0].get('Name')
+    s_objects_url = sec_org_user_info.json()['urls']['sobjects'] + 'ApexClass'
+    req_obj ={ "Name" : name_source , "Body" : body_source }
+    
+    resp = rest_sec_org.rest_api_post(s_objects_url,json.dumps(req_obj))
+    return jsonify(resp.json())
+    
+    s_objects_url = main_org_user_info.json()['urls']['sobjects'] + 'ApexClass'    
+    json_str ='{ "Name" : "Mydemoclass1", "Body" : "public class Mydemoclass1{ \n\n public Void sayHello(){ string name= \'HI NAGARAJU\'; system.debug(\'***Name\'+name);}   }" }'
+    print(json.dumps(json_str))
+    #json_str ='{ "Name" : "TestClass", "Body" : "public class TestClass {\n\n    private static String tStr = 'Test class String';\n    \n    \n    public static void method1() {\n        System.debug('do something interesting >>>>');\n    }\n    \n}" }'
+    resp = rest_main_org.rest_api_post(s_objects_url,json_str)
+    print(resp.status_code)
+    print(resp.json())
+    
+    metadata_container_url = main_org_user_info.json()['urls']['tooling_rest'] + 'sobjects/MetadataContainer'
+    json_str = '{"Name":"TestMetadataContainer"}'
+    resp = rest_main_org.rest_api_post(metadata_container_url,json_str)
+    print(resp.status_code)
+    print(resp.json())
+    {'id': '1dc0N000001qnUbQAI', 'success': True, 'errors': [], 'warnings': []}
+    
+    apex_class_member_url = main_org_user_info.json()['urls']['tooling_rest'] + 'sobjects/ApexClassMember'    
+    json_str = '{"MetadataContainerId":"1dc0N000001qnUbQAI","ContentEntityId" : "01p0N00000BFI5UQAX","Body":"public class Mydemoclass1{ public Void sayHello(){ string name= \'HI NAGARAJU\';String Phone = \'9948839625\'; String Email = \'Nag@gmail.com\';system.debug(\'***Name\'+name);}   } "}'
+    resp = rest_main_org.rest_api_post(apex_class_member_url,json_str)
+    print(resp.status_code)
+    print(resp.json())
+    {'id': '4000N0000003WMGQA2', 'success': True, 'errors': [], 'warnings': []}
+    
+    container_async_req_url = main_org_user_info.json()['urls']['tooling_rest'] + 'sobjects/ContainerAsyncRequest'
+    json_str = '{"MetadataContainerId" : "1dc0N000001qnUbQAI", "isCheckOnly": "false"}'
+    resp = rest_main_org.rest_api_post(container_async_req_url,json_str)
+    print(resp.status_code)
+    print(resp.json())
+    {'id': '1dr0N000001MNJ9QAO', 'success': True, 'errors': [], 'warnings': []}
+    
+
+    container_async_req_url = main_org_user_info.json()['urls']['tooling_rest'] + 'sobjects/ContainerAsyncRequest/1dr0N000001MNJ9QAO'    
+    resp = rest_main_org.rest_api_get(container_async_req_url)
+    print(resp.status_code)
+    print(resp.json())
+    {'attributes': {'type': 'ContainerAsyncRequest', 'url': '/services/data/v40.0/tooling/sobjects/ContainerAsyncRequest/1dr0N000001MNJ9QAO'}, 'Id': '1dr0N000001MNJ9QAO', 'IsDeleted': False, 'CreatedDate': '2018-03-13T13:03:40.000+0000', 'CreatedById': '0050N000006ufBmQAI', 'LastModifiedDate': '2018-03-13T13:03:40.000+0000', 'LastModifiedById': '0050N000006ufBmQAI', 'SystemModstamp': '2018-03-13T13:03:40.000+0000', 'MetadataContainerId': '1dc0N000001qnUbQAI', 'MetadataContainerMemberId': None, 'ErrorMsg': None, 'IsRunTests': False, 'State': 'Completed', 'IsCheckOnly': False, 'DeployDetails': {'allComponentMessages': [{'changed': True, 'columnNumber': None, 'componentType': 'ApexClass', 'created': False, 'createdDate': '2018-03-13T13:03:40.621+0000', 'deleted': False, 'fileName': 'classes/Mydemoclass1.cls', 'forPackageManifestFile': False, 'fullName': 'Mydemoclass1', 'id': '01p0N00000BFI5UQAX', 'knownPackagingProblem': False, 'lineNumber': None, 'problem': None, 'problemType': None, 'requiresProductionTestRun': True, 'success': True, 'warning': False}], 'componentFailures': [], 'componentSuccesses': [{'changed': True, 'columnNumber': None, 'componentType': 'ApexClass', 'created': False, 'createdDate': '2018-03-13T13:03:40.621+0000', 'deleted': False, 'fileName': 'classes/Mydemoclass1.cls', 'forPackageManifestFile': False, 'fullName': 'Mydemoclass1', 'id': '01p0N00000BFI5UQAX', 'knownPackagingProblem': False, 'lineNumber': None, 'problem': None, 'problemType': None, 'requiresProductionTestRun': True, 'success': True, 'warning': False}], 'runTestResult': None}}
+    
+    delete_url = main_org_user_info.json()['urls']['sobjects'] + 'ApexClass/01p0N00000BFI5UQAX'    
+    resp = rest_main_org.rest_api_delete(delete_url)
+    print(resp.status_code) #204 No content    
+    """
+    
+    
+    return jsonify(main_org_user_info.json())
+
+
+    """
+        String json ='{ "Name" : "Mydemoclass1", "Body" : "public class Mydemoclass1{ public Void sayHello(){ string name= \'HI NAGARAJU\'; system.debug(\'***Name\'+name);}   }" }';          
+        Httprequest req =new HttpRequest();
+        req.setEndpoint(URL.getSalesforceBaseUrl().toExternalForm()+'/services/data/v28.0/sobjects/ApexClass');
+        req.setMethod('POST');
+        req.setHeader('Content-Type','application/json');
+        req.setHeader('Authorization','OAuth ' + UserInfo.getSessionId());
+        req.setBody(json);
+        Http httpReq =new Http();
+        HttpResponse res = httpReq.send(req);
+        System.debug(res.getBody());
+"""
 
 @app.route('/auth/authorized')
 def authorized():
@@ -172,13 +249,112 @@ def compare_classes_results(rest_main_org, main_org_user_info, rest_sec_org, sec
                 if op != 0: 
                     diff_present = bool(1)
                     break
-
+            """
             if diff_present:
                 result_html = d2h(diff)
             else:
                 result_html = '<table class="no-diff"><tr>No differences</tr></table>'
-            result.append({'name':key, 'result_html' : result_html})
+            """
+            result.append({'name':key, 'diff_present':diff_present})
         return render_template('compare_classes_results.html', result=result)  
+    else:
+        if resp_one.status_code != 200:
+            return jsonify(resp_one.json())
+        if resp_two.status_code != 200:
+            return jsonify(resp_two.json())
+
+@app.route("/compare/classes_diff", methods=['GET'])
+@login_required
+def compare_classes_diff(rest_main_org, main_org_user_info, rest_sec_org, sec_org_user_info):
+    class_name_param = request.args['class_name']
+    
+    query_url_one = main_org_user_info.json()['urls']['tooling_rest'] +\
+        'query/?q=' +\
+        quote('SELECT Name,Body,ManageableState from ApexClass WHERE Name = \'' + class_name_param + '\' AND ManageableState=\'unmanaged\' LIMIT 1')
+    resp_one = rest_main_org.rest_api_get(query_url_one)
+
+    query_url_two = sec_org_user_info.json()['urls']['tooling_rest'] +\
+        'query/?q=' +\
+        quote('SELECT Name,Body,ManageableState from ApexClass WHERE Name = \'' + class_name_param + '\' AND ManageableState=\'unmanaged\' LIMIT 1')
+    resp_two = rest_sec_org.rest_api_get(query_url_two)
+    
+    if resp_one.status_code == 200 and resp_two.status_code == 200:
+        body_one = resp_one.json().get('records')[0]['Body'] if len(resp_one.json().get('records')) else ''
+        body_two = resp_two.json().get('records')[0]['Body'] if len(resp_two.json().get('records')) else ''
+        dmp = dmp_module.diff_match_patch()
+        diff = dmp.diff_main(body_one, body_two)
+        result_html = d2h(diff)
+        return render_template('compare_classes_diff.html', result_html=result_html, class_name=class_name_param)
+    else:
+        if resp_one.status_code != 200:
+            return jsonify(resp_one.json())
+        if resp_two.status_code != 200:
+            return jsonify(resp_two.json())
+
+@app.route("/compare/classes_deploy", methods=['GET'])
+@login_required
+def compare_classes_deploy(rest_main_org, main_org_user_info, rest_sec_org, sec_org_user_info):
+
+    """
+    delete_url = main_org_user_info.json()['urls']['sobjects'] + 'ApexClass/01p0N00000BFI5UQAX'    
+    resp = rest_main_org.rest_api_delete(delete_url)
+    print(resp.status_code) #204 No content  
+
+    s_objects_url = main_org_user_info.json()['urls']['sobjects'] + 'ApexClass'
+    json_str ='{ "Name" : "Mydemoclass1", "Body" : "public class Mydemoclass1{ public Void sayHello(){ string name= \'HI NAGARAJU\'; system.debug(\'***Name\'+name);}   }" }'
+    resp = rest_main_org.rest_api_post(s_objects_url,json_str)
+    print(resp.status_code)
+    print(resp.json())
+
+    """
+
+    class_name_param = request.args['class_name']
+    source_param = request.args['source']    
+    query_url_one = main_org_user_info.json()['urls']['tooling_rest'] +\
+        'query/?q=' +\
+        quote('SELECT Id,Name,Body,ManageableState from ApexClass WHERE Name = \'' + class_name_param + '\' AND ManageableState=\'unmanaged\' LIMIT 1')
+    resp_one = rest_main_org.rest_api_get(query_url_one)
+
+    query_url_two = sec_org_user_info.json()['urls']['tooling_rest'] +\
+        'query/?q=' +\
+        quote('SELECT Id,Name,Body,ManageableState from ApexClass WHERE Name = \'' + class_name_param + '\' AND ManageableState=\'unmanaged\' LIMIT 1')
+    resp_two = rest_sec_org.rest_api_get(query_url_two)
+    if resp_one.status_code == 200 and resp_two.status_code == 200:
+        if source_param.lower() == 'main':
+            if len(resp_two.json().get('records')) > 0:                
+                id_to_delete = resp_two.json().get('records')[0].get('Id')                
+                delete_url = sec_org_user_info.json()['urls']['sobjects'] + 'ApexClass/'+id_to_delete                
+                resp = rest_sec_org.rest_api_delete(delete_url)
+                if resp.status_code != 204:
+                    return jsonify(resp.json())
+            
+            if len(resp_one.json().get('records')) > 0:
+
+                body_source = resp_one.json().get('records')[0].get('Body')
+                name_source = resp_one.json().get('records')[0].get('Name')
+                s_objects_url = sec_org_user_info.json()['urls']['sobjects'] + 'ApexClass'
+                req_obj ={ "Name" : name_source , "Body" : body_source }
+                resp = rest_sec_org.rest_api_post(s_objects_url,json.dumps(req_obj))                
+                if resp.status_code != 201:
+                    return jsonify(resp.json())
+        else:
+            if len(resp_one.json().get('records')) > 0:
+                id_to_delete = resp_one.json().get('records')[0].get('Id')
+                delete_url = main_org_user_info.json()['urls']['sobjects'] + 'ApexClass/'+id_to_delete    
+                resp = rest_main_org.rest_api_delete(delete_url)
+                if resp.status_code != 204:
+                    return jsonify(resp.json())
+            
+            if len(resp_two.json().get('records')) > 0:
+                body_source = resp_two.json().get('records')[0].get('Body')
+                name_source = resp_two.json().get('records')[0].get('Name')
+                s_objects_url = main_org_user_info.json()['urls']['sobjects'] + 'ApexClass'
+                req_obj ={ "Name" : name_source , "Body" : body_source }
+                resp = rest_main_org.rest_api_post(s_objects_url,json.dumps(req_obj))                
+                if resp.status_code != 201:
+                    return jsonify(resp.json())
+
+        return redirect(url_for('compare_classes'))
     else:
         if resp_one.status_code != 200:
             return jsonify(resp_one.json())

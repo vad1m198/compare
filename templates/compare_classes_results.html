@@ -12,7 +12,15 @@
     
     {% for o in result %}
         <div class="slds-text-heading_small slds-m-top_small">{{ o.name }}</div>
-        <code class="result-table">{{ o.result_html|safe }}</code>
+        <!--<code class="result-table">{{ o.result_html|safe }}</code>-->
+        
+        {% if o.diff_present %}
+        <a class="slds-button slds-button_brand" href="{{ url_for('compare_classes_diff',class_name=o.name) }}">Show Diff</a>
+            <!--<a class="slds-button slds-button_brand" href="{{ url_for('compare_classes_deploy',class_name=o.name,source='main') }}">Deploy Main to Secondary</a>
+            <a class="slds-button slds-button_brand" href="{{ url_for('compare_classes_deploy',class_name=o.name,source='secondary') }}">Deploy Secondary to Main</a>-->
+        {% else %}
+            <span>No differences</span>
+        {% endif %}
     {% endfor %}    
 </div>
     
